@@ -8,11 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
-{
-    // Video 1: Introduction : Building a walking skeleton part two - client
-    [Route("api/[controller]")]
-    [ApiController]
-    public class UsersController : ControllerBase
+{        
+    public class UsersController : BaseApiController
     {
         private readonly DataContext _context;
 

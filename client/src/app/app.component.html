@@ -2,5 +2,8 @@
 
 <!-- Structural Directive: Modifies the domain object model within the html-->
 <ul>
-  <li *ngFor="let user of users">{{ user.id }} - {{ user.userName }}</li>
+  <li *ngFor="let user of users">
+    {{ user.id }} - {{ user.userName }} PasswordHash:
+    {{ user.passwordHash }} PasswordSalt: {{ user.passwordSalt }}
+  </li>
 </ul>
