@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using API.Data;
 using API.DTOs;
 using API.Entities;
+using API.interfaces;
+using API.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,14 +17,17 @@ namespace API.Controllers
     {
         private readonly DataContext _context;
 
-        public AccountController(DataContext context)
+        private readonly ITokenService _tokenService;
+
+        public AccountController(DataContext context, ITokenService tokenService)
         {
+            _tokenService = tokenService;
             _context = context;
         }
 
-        [HttpPost("register")]
-        // video 010: JSON web tokens
-        public async Task<ActionResult<AppUser>> Register(RegisterDto registerDto)
+        [HttpPost("register")] // account/register
+        // video 012 Adding the create token logic
+        public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
         {
             // check if user exists
             if (await UserExists(registerDto.Username)) return BadRequest("Username is taken");
@@ -40,11 +45,15 @@ namespace API.Controllers
             // save user to DB
             await _context.SaveChangesAsync();
             // return user
-            return user;
+            return new UserDto
+            {
+                Username = user.UserName,
+                Token = _tokenService.CreateToken(user)
+            };
         }
 
-        [HttpPost("login")]
-        public async Task<ActionResult<AppUser>> Login(LoginDto loginDto)
+        [HttpPost("login")] // account/login
+        public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
         {
             // Check DB for user
             var user = await _context.Users.SingleOrDefaultAsync(x => x.UserName == loginDto.Username);
@@ -60,7 +69,11 @@ namespace API.Controllers
                 if (computedHash[i] != user.PasswordHash[i]) return Unauthorized("Invalid password");
             }
             // If password matches, return user
-            return user;
+            return new UserDto
+            {
+                Username = user.UserName,
+                Token = _tokenService.CreateToken(user)
+            };
         }
 
         // Helper method to check if user exists

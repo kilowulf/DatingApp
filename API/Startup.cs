@@ -4,8 +4,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using API.Data;
+using API.interfaces;
+using API.Services;
 
 namespace API
 {
@@ -21,6 +24,7 @@ namespace API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddScoped<ITokenService, TokenService>();
             // Adds a database context.
             services.AddDbContext<DataContext>(options =>
             {
@@ -29,6 +33,17 @@ namespace API
 
             services.AddControllers();
             services.AddCors();
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_config["TokenKey"])),
+                        ValidateIssuer = false,
+                        ValidateAudience = false
+                    };
+                });
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebAPIv5", Version = "v1" });
@@ -50,6 +65,8 @@ namespace API
             app.UseRouting();
             // 010 Using https in angular
             app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("https://localhost:4200"));
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 
